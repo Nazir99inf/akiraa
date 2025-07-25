@@ -23,7 +23,10 @@ if ([Buffer.from('YWtpcmFhLWpz', 'base64').toString('utf-8'), Buffer.from('YWtpc
             super();
             this.conn = null;
             this.store = null;
-            this.config = config;
+            this.config = {
+    ...config,
+    proto: config.baileys.proto // Pastikan proto tersedia
+},
             this.authFilePath = path.join(__dirname, 'auth_status.json');
             this.logger = pino({
                 timestamp: () => `,"time":"${new Date().toJSON()}"`
@@ -249,7 +252,7 @@ this.conn.ev.on('connection.update', async (update) => {
      const chatUpdate = cht.messages[0];
      if (!chatUpdate.message) return;
    chatUpdate.message = (Object.keys(chatUpdate.message)[0] === 'ephemeralMessage') ? chatUpdate.message.ephemeralMessage.message : chatUpdate.message;
-     let m = await smsg(chatUpdate, this.conn, this.config.store, this.config.baileys);
+     let m = await smsg(this.conn, chatUpdate, this.config);
        if (m.key.jid === "status@broadcast") {
          await this.conn.readMessage([m.key])
          await this.conn.sendMessage(m.key.jid, {
